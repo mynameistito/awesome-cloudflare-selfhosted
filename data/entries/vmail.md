@@ -4,5 +4,6 @@ repo: oiov/vmail
 category: email-and-inboxes
 license: GPL-3.0
 bindings: [D1, Email, Cron]
+popular: true
 summary: Temporary mailbox on one domain, sends and receives, with an open API.
 ---

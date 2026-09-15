@@ -12,7 +12,6 @@ import assert from "node:assert/strict";
 import {
   loadCategories,
   loadEntries,
-  loadPopular,
   loadSections,
   parseFrontmatter,
   licenseBadge,
@@ -20,6 +19,8 @@ import {
   slugify,
   starBadge,
 } from "./data.js";
+import { setPopularFlag } from "./refresh-popular.js";
+import { renderEntry } from "./issue-entry.js";
 
 test("frontmatter: scalars, inline lists, empties and numbers", () => {
   const { data, body } = parseFrontmatter(
@@ -225,8 +226,40 @@ test("popular membership reaches the rendered row", () => {
   }
 });
 
-test("every repo in popular.json is one that is actually listed", () => {
-  const repos = new Set(loadEntries().map((e) => e.repo));
-  const orphans = loadPopular().filter((r) => !repos.has(r));
-  assert.deepEqual(orphans, [], `popular.json names unlisted repos: ${orphans.join(", ")}`);
+// The flag lives on the entry so a new submission is highlighted the moment it
+// lands, rather than waiting for the monthly refresh to notice it.
+test("the popular flag is read from the entry's own frontmatter", () => {
+  const { data } = parseFrontmatter(
+    "---\nname: X\nrepo: a/b\ncategory: analytics\npopular: true\nsummary: Thing.\n---\n",
+  );
+  assert.equal(data.popular, true, "frontmatter booleans must parse as booleans");
+
+  const { data: without } = parseFrontmatter(
+    "---\nname: X\nrepo: a/b\ncategory: analytics\nsummary: Thing.\n---\n",
+  );
+  assert.equal(without.popular, undefined);
+});
+
+test("setPopularFlag adds and removes without touching anything else", () => {
+  const plain = "---\nname: X\nbindings: [D1]\nsummary: Thing.\n---\n";
+  const flagged = setPopularFlag(plain, true);
+  assert.match(flagged, /^popular: true$/m);
+  assert.match(flagged, /^bindings: \[D1\]$/m, "other fields survive");
+  assert.equal(setPopularFlag(flagged, true), flagged, "setting it twice is a no-op");
+  assert.equal(setPopularFlag(flagged, false), plain, "removing restores the original");
+  assert.equal(setPopularFlag(plain, false), plain, "removing an absent flag is a no-op");
+});
+
+test("renderEntry writes the flag only when it is true", () => {
+  const popular = renderEntry({
+    name: "X", repo: "a/b", category: "analytics", summary: "Thing.",
+    license: "MIT", bindings: ["D1"], popular: true,
+  });
+  assert.match(popular, /^popular: true$/m);
+
+  const ordinary = renderEntry({
+    name: "X", repo: "a/b", category: "analytics", summary: "Thing.",
+    license: "MIT", bindings: ["D1"], popular: false,
+  });
+  assert.ok(!ordinary.includes("popular"), "an explicit false would be noise on most entries");
 });

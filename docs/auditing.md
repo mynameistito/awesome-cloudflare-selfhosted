@@ -39,18 +39,23 @@ No dependencies — Node 20+ and [`gh`](https://cli.github.com) are all you need
 
 ## Highlighted entries
 
-`data/popular.json` lists the repositories whose star badge is drawn in green,
-currently those at or above 1,000 stars — about a fifth of the list.
+An entry at or above 1,000 stars — about a fifth of the list — carries
+`popular: true` in its frontmatter and draws its star badge in green.
 
-Only membership is stored, never a count. The badge fetches the live number from
-shields on every page load, so nothing stale is ever displayed; the file decides
-the colour and nothing else. That is the difference from storing counts, which
-this list deliberately does not do: a stale count shown as fact is wrong, while a
-stale threshold means a project that crossed the line last week is highlighted a
-little late.
+Only the flag is stored, never a count. The badge fetches the live number from
+shields on every page load, so nothing stale is ever displayed; the flag decides
+the colour and nothing else.
 
-It refreshes monthly (`npm run popular`). The diff is a short list of projects
-that crossed the line, rather than 117 integers ticking over.
+It lives on the entry rather than in a shared list because `propose-entry` sets
+it from the stars it has already fetched, so a popular submission is highlighted
+the moment it lands instead of waiting for a refresh — and because a central list
+would be a file every submission appends to, which is exactly the collision this
+repo avoids by keeping generated files out of pull requests. It also matches how
+`license` and `bindings` already work: derived from the repository, written into
+the entry.
+
+`npm run popular` re-checks every entry monthly and rewrites only the files whose
+status changed, so a month where nothing crossed the line touches nothing.
 
 ## What the audit checks
 

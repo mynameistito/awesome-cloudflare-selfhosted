@@ -19,7 +19,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { ENTRIES_DIR, loadCategories, loadEntries } from "./data.js";
+import { ENTRIES_DIR, POPULAR_THRESHOLD, loadCategories, loadEntries } from "./data.js";
 import { STALE_DAYS, inspectRepo } from "./audit.js";
 import {
   FIELDS,
@@ -123,6 +123,9 @@ async function main() {
     summary,
     license: info.license,
     bindings: info.bindings,
+    // Set at creation from the stars already fetched, so a popular submission
+    // is highlighted the moment it lands rather than at the next refresh.
+    popular: info.stars >= POPULAR_THRESHOLD,
     licenseNote: unlicensed
       ? "No LICENSE file in the repository, so it is technically all-rights-reserved " +
         "until the maintainer adds one"

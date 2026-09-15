@@ -4,5 +4,6 @@ repo: beilunyang/moemail
 category: email-and-inboxes
 license: MIT
 bindings: [D1, KV]
+popular: true
 summary: Multi-user temporary email service.
 ---

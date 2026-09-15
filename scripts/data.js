@@ -28,28 +28,8 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 export const DATA_DIR = path.join(ROOT, "data");
 export const CATEGORIES_DIR = path.join(DATA_DIR, "categories");
 export const ENTRIES_DIR = path.join(DATA_DIR, "entries");
-export const POPULAR_PATH = path.join(DATA_DIR, "popular.json");
-
 /** Stars at or above which an entry's badge is highlighted. */
 export const POPULAR_THRESHOLD = 1000;
-
-/**
- * Repositories whose star badge is highlighted, refreshed monthly by
- * `refresh-popular.js`.
- *
- * Membership only -- no count is stored. The badge fetches the live number from
- * shields on every page load, so nothing stale is ever displayed; this decides
- * the colour and nothing else. A project that crossed the line last week is
- * highlighted a little late, which is not something a reader can misread.
- */
-export function loadPopular() {
-  if (!fs.existsSync(POPULAR_PATH)) return [];
-  try {
-    return JSON.parse(fs.readFileSync(POPULAR_PATH, "utf8")).repos ?? [];
-  } catch {
-    return [];
-  }
-}
 
 const REQUIRED_ENTRY = ["name", "repo", "category", "summary"];
 const REQUIRED_CATEGORY = ["name", "order"];
@@ -76,6 +56,8 @@ export function parseFrontmatter(text) {
         .filter(Boolean);
     } else if (value === "" || value === "null" || value === "~") {
       data[key] = null;
+    } else if (value === "true" || value === "false") {
+      data[key] = value === "true";
     } else if (/^-?\d+$/.test(value)) {
       data[key] = Number(value);
     } else {
@@ -115,8 +97,6 @@ export function loadEntries(categories = loadCategories()) {
   const bySlug = new Map(categories.map((c) => [c.slug, c]));
   const order = new Map(categories.map((c, i) => [c.slug, i]));
 
-  const popular = new Set(loadPopular());
-
   const entries = readDir(ENTRIES_DIR, REQUIRED_ENTRY).map((entry) => {
     const category = bySlug.get(entry.category);
     if (!category) {
@@ -130,7 +110,7 @@ export function loadEntries(categories = loadCategories()) {
       categorySlug: entry.category,
       bindings: entry.bindings ?? [],
       license: entry.license ?? null,
-      popular: popular.has(entry.repo),
+      popular: entry.popular === true,
     };
   });
 

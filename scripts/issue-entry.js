@@ -129,8 +129,13 @@ export function slugForRepo(repo) {
   return slug;
 }
 
-/** Render the entry file. `license` and `bindings` are filled by the audit. */
-export function renderEntry({ name, repo, category, summary, license, bindings, licenseNote }) {
+/**
+ * Render the entry file. `license`, `bindings` and `popular` are filled from the
+ * repository, not by the submitter.
+ */
+export function renderEntry({
+  name, repo, category, summary, license, bindings, licenseNote, popular,
+}) {
   const lines = [
     "---",
     `name: ${name}`,
@@ -139,7 +144,10 @@ export function renderEntry({ name, repo, category, summary, license, bindings, 
     `license: ${license ?? "null"}`,
   ];
   if (licenseNote) lines.push(`license_note: ${licenseNote}`);
-  lines.push(`bindings: [${(bindings ?? []).join(", ")}]`, `summary: ${summary}`, "---", "");
+  lines.push(`bindings: [${(bindings ?? []).join(", ")}]`);
+  // Only when true -- an explicit `popular: false` on 96 files is noise.
+  if (popular) lines.push("popular: true");
+  lines.push(`summary: ${summary}`, "---", "");
   return lines.join("\n");
 }
 

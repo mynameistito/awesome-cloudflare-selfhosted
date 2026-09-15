@@ -4,5 +4,6 @@ repo: kavinsood/yaos
 category: notes-knowledge-and-sync
 license: 0BSD
 bindings: [R2, Durable Objects]
+popular: true
 summary: Realtime Obsidian sync on your own Worker, replacing Obsidian Sync.
 ---
