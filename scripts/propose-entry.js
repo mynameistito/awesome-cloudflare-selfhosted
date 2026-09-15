@@ -185,7 +185,7 @@ async function main() {
           "",
           "A maintainer still decides whether it belongs: whether it is genuinely a SaaS " +
             "replacement rather than a framework or a template, and whether the name, summary " +
-            "and category are right. The pull request opens once they add the `approved` label.",
+            "and category are right. The pull request opens when a maintainer comments `/approve`.",
         ]
       : [
           "The display name is taken from the repository; that, the summary and the category",
