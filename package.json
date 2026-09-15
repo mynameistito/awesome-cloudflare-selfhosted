@@ -14,6 +14,7 @@
     "audit": "node scripts/audit.js",
     "audit:stale": "node scripts/audit.js --stale",
     "test": "node --test scripts/*.test.js",
-    "lint": "npx --yes awesome-lint"
+    "lint": "npx --yes awesome-lint",
+    "popular": "node scripts/refresh-popular.js"
   }
 }

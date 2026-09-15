@@ -37,6 +37,21 @@ npm run lint            # awesome-lint
 No dependencies — Node 20+ and [`gh`](https://cli.github.com) are all you need. The audit uses
 `gh` for API quota; CI runs it monthly and on every pull request.
 
+## Highlighted entries
+
+`data/popular.json` lists the repositories whose star badge is drawn in green,
+currently those at or above 1,000 stars — about a fifth of the list.
+
+Only membership is stored, never a count. The badge fetches the live number from
+shields on every page load, so nothing stale is ever displayed; the file decides
+the colour and nothing else. That is the difference from storing counts, which
+this list deliberately does not do: a stale count shown as fact is wrong, while a
+stale threshold means a project that crossed the line last week is highlighted a
+little late.
+
+It refreshes monthly (`npm run popular`). The diff is a short list of projects
+that crossed the line, rather than 117 integers ticking over.
+
 ## What the audit checks
 
 [`scripts/audit.js`](../scripts/audit.js) walks every entry and reports:

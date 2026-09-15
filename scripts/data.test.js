@@ -12,6 +12,7 @@ import assert from "node:assert/strict";
 import {
   loadCategories,
   loadEntries,
+  loadPopular,
   loadSections,
   parseFrontmatter,
   licenseBadge,
@@ -200,4 +201,32 @@ test("no summary contains a character that would break a table cell", () => {
     assert.ok(!entry.summary.includes("|"), `${entry.slug} summary contains a pipe`);
     assert.ok(!entry.name.includes("|"), `${entry.slug} name contains a pipe`);
   }
+});
+
+test("popular entries get a highlighted badge, others do not", () => {
+  const plain = starBadge("a/b");
+  const highlighted = starBadge("a/b", true);
+  assert.ok(!plain.includes("color="), "an ordinary badge keeps the default colour");
+  assert.match(highlighted, /color=brightgreen/);
+  // Not a gold: that family collides with the orange licence warning.
+  assert.ok(!/color=(gold|orange|[a-f0-9]*a[a-f0-9]{4})/.test(highlighted));
+});
+
+test("popular membership reaches the rendered row", () => {
+  const entries = loadEntries();
+  const popular = entries.filter((e) => e.popular);
+  assert.ok(popular.length > 0, "expected some entries above the threshold");
+  assert.ok(popular.length < entries.length, "expected the highlight to be selective");
+  for (const e of popular) {
+    assert.match(renderRow(e)[0], /color=brightgreen/, `${e.slug} should be highlighted`);
+  }
+  for (const e of entries.filter((x) => !x.popular)) {
+    assert.ok(!renderRow(e)[0].includes("color="), `${e.slug} should not be highlighted`);
+  }
+});
+
+test("every repo in popular.json is one that is actually listed", () => {
+  const repos = new Set(loadEntries().map((e) => e.repo));
+  const orphans = loadPopular().filter((r) => !repos.has(r));
+  assert.deepEqual(orphans, [], `popular.json names unlisted repos: ${orphans.join(", ")}`);
 });

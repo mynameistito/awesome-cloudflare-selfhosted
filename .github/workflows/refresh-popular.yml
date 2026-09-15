@@ -1,0 +1,49 @@
+name: refresh-popular
+
+# Refreshes which entries carry a highlighted star badge.
+#
+# Stores membership, never a count. The badge fetches the live number from
+# shields on every page load, so nothing stale is displayed -- this decides one
+# thing, the colour. A project that crossed the threshold last week is
+# highlighted a little late, which no reader can misread as a wrong figure.
+#
+# Monthly is plenty: crossing 1,000 stars is not a weekly event, and the diff
+# reads as a short list of projects that crossed rather than 117 ticking numbers.
+
+on:
+  schedule:
+    - cron: '0 4 1 * *'   # monthly, first of the month
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Refresh the highlight list
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          node scripts/refresh-popular.js
+          npm run build
+
+      - name: Commit if membership changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No change."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/popular.json README.md
+          git commit -m "Refresh highlighted entries"
+          git push

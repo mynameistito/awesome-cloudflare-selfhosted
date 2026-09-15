@@ -1,0 +1,26 @@
+{
+ "threshold": 1000,
+ "repos": [
+  "beilunyang/moemail",
+  "benvinegar/counterscale",
+  "cloudflare/agentic-inbox",
+  "dreamhunter2333/cloudflare_temp_email",
+  "every-app/open-seo",
+  "hieunc229/mailflare",
+  "huilang-me/CF-Server-Monitor",
+  "i365dev/free4chat",
+  "kavinsood/yaos",
+  "ling-drag0n/CloudPaste",
+  "lyc8503/UptimeFlare",
+  "maillab/cloud-mail",
+  "MarSeventh/CloudFlare-ImgBed",
+  "miantiao-me/Sink",
+  "microfeed/microfeed",
+  "oiov/vmail",
+  "openRin/Rin",
+  "SharzyL/pastebin-worker",
+  "shuaiplus/nodewarden",
+  "SonicJs-Org/sonicjs",
+  "tianma-if/edgeever"
+ ]
+}

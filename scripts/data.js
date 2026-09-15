@@ -28,6 +28,28 @@ export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 export const DATA_DIR = path.join(ROOT, "data");
 export const CATEGORIES_DIR = path.join(DATA_DIR, "categories");
 export const ENTRIES_DIR = path.join(DATA_DIR, "entries");
+export const POPULAR_PATH = path.join(DATA_DIR, "popular.json");
+
+/** Stars at or above which an entry's badge is highlighted. */
+export const POPULAR_THRESHOLD = 1000;
+
+/**
+ * Repositories whose star badge is highlighted, refreshed monthly by
+ * `refresh-popular.js`.
+ *
+ * Membership only -- no count is stored. The badge fetches the live number from
+ * shields on every page load, so nothing stale is ever displayed; this decides
+ * the colour and nothing else. A project that crossed the line last week is
+ * highlighted a little late, which is not something a reader can misread.
+ */
+export function loadPopular() {
+  if (!fs.existsSync(POPULAR_PATH)) return [];
+  try {
+    return JSON.parse(fs.readFileSync(POPULAR_PATH, "utf8")).repos ?? [];
+  } catch {
+    return [];
+  }
+}
 
 const REQUIRED_ENTRY = ["name", "repo", "category", "summary"];
 const REQUIRED_CATEGORY = ["name", "order"];
@@ -93,6 +115,8 @@ export function loadEntries(categories = loadCategories()) {
   const bySlug = new Map(categories.map((c) => [c.slug, c]));
   const order = new Map(categories.map((c, i) => [c.slug, i]));
 
+  const popular = new Set(loadPopular());
+
   const entries = readDir(ENTRIES_DIR, REQUIRED_ENTRY).map((entry) => {
     const category = bySlug.get(entry.category);
     if (!category) {
@@ -106,6 +130,7 @@ export function loadEntries(categories = loadCategories()) {
       categorySlug: entry.category,
       bindings: entry.bindings ?? [],
       license: entry.license ?? null,
+      popular: popular.has(entry.repo),
     };
   });
 
@@ -137,7 +162,7 @@ export function loadSections() {
  */
 const BADGE_HEIGHT = 18;
 
-export function starBadge(repo) {
+export function starBadge(repo, popular = false) {
   // Fetched live by the reader's browser, so no count is stored here.
   // flat-square is ~760 bytes against ~2.8KB for the default, which matters
   // when a page carries one per entry.
@@ -145,8 +170,12 @@ export function starBadge(repo) {
   // An <img> rather than `![]()` for `align` and `height`, the levers GitHub's
   // sanitiser leaves: it strips `style` and substitutes its own, and drops
   // `vspace`. No `hspace` -- it pads both sides, and the badge sits flush left.
+  // Green rather than a gold, which would sit in the same family as the orange
+  // licence warning. The warning is the signal that matters; the highlight must
+  // not compete with it.
+  const colour = popular ? "&amp;color=brightgreen" : "";
   const src =
-    `https://img.shields.io/github/stars/${repo}?style=flat-square&amp;label=%E2%98%85`;
+    `https://img.shields.io/github/stars/${repo}?style=flat-square&amp;label=%E2%98%85${colour}`;
   return `<img alt="stars" src="${src}" align="absmiddle" height="${BADGE_HEIGHT}">`;
 }
 
@@ -201,7 +230,7 @@ export function licenseBadge(license) {
  */
 export function renderRow(entry) {
   const left = `**[${entry.name}](https://github.com/${entry.repo})**<br>` +
-    `${starBadge(entry.repo)}&nbsp;${licenseBadge(entry.license)}`;
+    `${starBadge(entry.repo, entry.popular)}&nbsp;${licenseBadge(entry.license)}`;
 
   const bindings = (entry.bindings ?? []).join(" · ");
   const right = bindings ? `${entry.summary}<br><sub>${bindings}</sub>` : entry.summary;
