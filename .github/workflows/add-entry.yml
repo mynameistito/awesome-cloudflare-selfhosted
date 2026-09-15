@@ -45,6 +45,10 @@ jobs:
         id: check
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
+          # propose-entry reads the submitted repository through `gh api`.
+          # Without a token that is unauthenticated and every lookup fails, so
+          # the verdict became "could not be read" for perfectly good projects.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
           node scripts/propose-entry.js --check-only > proposal.json

@@ -71,6 +71,9 @@ jobs:
         id: propose
         env:
           ISSUE_BODY: ${{ github.event.issue.body }}
+          # Reads the submitted repository through `gh api`; unauthenticated
+          # lookups fail, so the token is required here too.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set +e
           node scripts/propose-entry.js > proposal.json
