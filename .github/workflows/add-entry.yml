@@ -1,0 +1,52 @@
+name: add-entry
+
+# Checks a submission issue and comments the verdict. Runs on every open and
+# edit, and writes nothing but a comment.
+#
+# Opening the pull request is a separate, maintainer-gated step -- see
+# approve.yml. That split matters because opening a PR pushes a branch to this
+# repository, which is a write, not a suggestion.
+#
+# The issue body is untrusted text written by anyone on the internet. It is
+# passed to the script through the environment and parsed in Node -- never
+# interpolated into a `run:` string, where a backtick or $( ) would execute.
+# Nothing from the submitted repository is ever executed; it is only read.
+
+on:
+  issues:
+    types: [opened, edited, labeled]
+
+jobs:
+  # Stage one: report on the submission. Read-only apart from the comment.
+  check:
+    if: >-
+      contains(github.event.issue.labels.*.name, 'submission') &&
+      (github.event.action != 'labeled' || github.event.label.name == 'submission')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check the submission
+        id: check
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          set +e
+          node scripts/propose-entry.js --check-only > proposal.json
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Comment the verdict
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh issue comment "$ISSUE_NUMBER" --body-file proposal-comment.md
+
+      - name: Fail the run if the submission was rejected
+        if: steps.check.outputs.status != '0'
+        run: exit 1

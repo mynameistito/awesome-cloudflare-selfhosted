@@ -1,0 +1,19 @@
+{
+  "name": "awesome-cloudflare-selfhosted",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Open-source apps that replace a SaaS product, running in your own Cloudflare account.",
+  "license": "CC0-1.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "check": "node scripts/build.js --check",
+    "audit": "node scripts/audit.js",
+    "audit:stale": "node scripts/audit.js --stale",
+    "test": "node --test scripts/*.test.js",
+    "lint": "npx --yes awesome-lint"
+  }
+}

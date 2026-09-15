@@ -1,0 +1,121 @@
+name: approve
+
+# `/approve` on a submission issue opens the pull request.
+#
+# One trigger, one path: the comment does the work. The `approved` label is
+# applied afterwards as a record, so the issue list is still filterable, but
+# nothing watches for it.
+#
+# Anyone can comment on a public issue, so the check is the MAINTAINERS list
+# below: one username per line, matched exactly. An explicit list is used rather
+# than `author_association`, which reports CONTRIBUTOR for anyone who ever
+# landed a commit and is not the same as being allowed to approve.
+#
+# issue_comment workflows always run from the default branch, so a pull request
+# cannot add its author to the list and self-approve -- the change has to be
+# merged first. Editing it is a commit either way, so who may approve stays
+# reviewable in history.
+#
+# (A reaction would be a lighter gesture, but GitHub fires no webhook event for
+# reactions, so nothing can trigger on one.)
+
+on:
+  issue_comment:
+    types: [created]
+
+env:
+  # Who may approve a submission. One GitHub username per line.
+  MAINTAINERS: |
+    theoephraim
+
+jobs:
+  approve:
+    if: >-
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.labels.*.name, 'submission') &&
+      startsWith(github.event.comment.body, '/approve')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check the commenter is a maintainer
+        id: auth
+        env:
+          ACTOR: ${{ github.event.comment.user.login }}
+        run: |
+          set -euo pipefail
+          # An empty ACTOR is rejected outright and blank lines are stripped
+          # before matching: `grep -qxF ""` matches a blank line, and the list
+          # literal ends with one, so without both guards an empty username
+          # would authorise itself.
+          if [ -z "${ACTOR:-}" ]; then
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "No commenter login -- ignoring /approve."
+          elif printf '%s\n' "$MAINTAINERS" | grep -v '^[[:space:]]*#' | grep -v '^[[:space:]]*$' | grep -qxF "$ACTOR"; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+            echo "$ACTOR is a maintainer."
+          else
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+            echo "$ACTOR is not a maintainer -- ignoring /approve."
+          fi
+
+      - name: Build the entry from the issue
+        if: steps.auth.outputs.ok == 'true'
+        id: propose
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          set +e
+          node scripts/propose-entry.js > proposal.json
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+
+      - name: Comment the verdict
+        if: steps.auth.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: gh issue comment "$ISSUE_NUMBER" --body-file proposal-comment.md
+
+      - name: Stop if the submission no longer qualifies
+        if: steps.auth.outputs.ok == 'true' && steps.propose.outputs.status != '0'
+        run: exit 1
+
+      - name: Regenerate and open the pull request
+        if: steps.auth.outputs.ok == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          APPROVER: ${{ github.event.comment.user.login }}
+        run: |
+          set -euo pipefail
+          npm run build
+          npm test
+
+          SLUG=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("proposal.json","utf8")).slug)')
+          REPO=$(node -e 'console.log(JSON.parse(require("fs").readFileSync("proposal.json","utf8")).repo)')
+          rm -f proposal.json proposal-comment.md
+
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "add-entry/$SLUG"
+          git add data/entries README.md
+          git commit -m "Add $REPO to the list" -m "Closes #$ISSUE_NUMBER"
+          git push -u origin "add-entry/$SLUG"
+
+          gh pr create \
+            --title "Add $REPO" \
+            --body "Generated from #$ISSUE_NUMBER, approved by @$APPROVER.
+
+          License and bindings were read from the repository. The display name comes from the repo
+          name and the summary from the issue, so both still want a human read." \
+            --label submission
+
+          # A record, not a trigger: nothing watches for this label.
+          gh issue edit "$ISSUE_NUMBER" --add-label approved

@@ -1,0 +1,3 @@
+# Blank issues stay on: detection bugs, removals and questions have no form.
+# Only new entries need one, because entry files are generated rather than written.
+blank_issues_enabled: true
