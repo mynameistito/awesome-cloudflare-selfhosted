@@ -19,8 +19,10 @@ jobs:
       - name: Test the config parser
         run: npm test
 
-      - name: Check README is generated from entries/
-        run: npm run check
+      # Not `npm run check`: pull requests deliberately do not carry README.md,
+      # so it is expected to be behind. This proves the data still builds.
+      - name: Check the generated files build
+        run: npm run build
 
       - name: Lint the list against the awesome spec
         run: npm run lint

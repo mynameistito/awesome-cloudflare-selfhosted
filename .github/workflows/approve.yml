@@ -98,6 +98,9 @@ jobs:
           APPROVER: ${{ github.event.comment.user.login }}
         run: |
           set -euo pipefail
+          # Build to prove the entry is well-formed, but do not commit the
+          # result. README.md is generated on main after merge instead -- see
+          # the note below on why a pull request must not carry it.
           npm run build
           npm test
 
@@ -108,7 +111,11 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "add-entry/$SLUG"
-          git add data/entries README.md
+          # Only the data file. Two pull requests that each regenerated
+          # README.md would both rewrite the entry count to the same new value,
+          # which git merges cleanly without a conflict -- leaving a README that
+          # silently disagrees with the data and drops one of the two rows.
+          git add data/entries
           git commit -m "Add $REPO to the list" -m "Closes #$ISSUE_NUMBER"
           git push -u origin "add-entry/$SLUG"
 

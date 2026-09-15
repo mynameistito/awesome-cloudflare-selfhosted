@@ -1,0 +1,47 @@
+name: regenerate
+
+# Rebuilds README.md and the issue form from data/ whenever data or the tooling
+# changes on main, and commits the result.
+#
+# Generated files are deliberately absent from pull requests. Two submissions
+# that each regenerated README.md would both rewrite the entry count to the same
+# new number, and git merges identical changes cleanly -- no conflict, but a
+# README that disagrees with the data and silently omits one of the two entries.
+# Regenerating once, after merge, is the only way both land correctly.
+
+on:
+  push:
+    branches: [main]
+    paths: ['data/**', 'scripts/**', 'README.md']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    # The job commits to main, which fires this workflow again. The second run
+    # finds nothing to do and stops, but skipping the bot outright is cheaper.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Rebuild from data/
+        run: npm run build
+
+      - name: Commit if anything changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "Already current."
+            exit 0
+          fi
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md .github/ISSUE_TEMPLATE/add-entry.yml
+          git commit -m "Regenerate from data/"
+          git push
