@@ -127,6 +127,7 @@ outright.
 | **[RedwoodSDK Invoices](https://github.com/redwoodjs/invoices)**<br><img alt="stars" src="https://img.shields.io/github/stars/redwoodjs/invoices?style=flat-square&amp;label=%E2%98%85" align="absmiddle" height="18">&nbsp;<img alt="MIT" src="https://img.shields.io/badge/MIT-lightgrey?style=flat-square" align="absmiddle" height="18">                                 | Invoicing with editable-everything documents, PDF export and logo support.<br><sub>R2 · Durable Objects</sub>                                                                     |
 | **[ResolveHQ](https://github.com/mirza-rizvi/ResolveHQ)**<br><img alt="stars" src="https://img.shields.io/github/stars/mirza-rizvi/ResolveHQ?style=flat-square&amp;label=%E2%98%85" align="absmiddle" height="18">&nbsp;<img alt="⚠ Source-Available" src="https://img.shields.io/badge/%E2%9A%A0_Source--Available-orange?style=flat-square" align="absmiddle" height="18"> | Zendesk-style helpdesk: shared inbox, email threading and AI-assisted replies.<br><sub>D1 · R2 · Queues · Workers AI · Email · Cron</sub>                                         |
 | **[Seeder](https://github.com/danielsyauqi/Seeder)**<br><img alt="stars" src="https://img.shields.io/github/stars/danielsyauqi/Seeder?style=flat-square&amp;label=%E2%98%85" align="absmiddle" height="18">&nbsp;<img alt="MIT" src="https://img.shields.io/badge/MIT-lightgrey?style=flat-square" align="absmiddle" height="18">                                            | Project manager with kanban, client requests, a public client board and an MCP server.<br><sub>D1 · R2</sub>                                                                      |
+| **[X Harness](https://github.com/Shudesu/x-harness-oss)**<br><img alt="stars" src="https://img.shields.io/github/stars/Shudesu/x-harness-oss?style=flat-square&amp;label=%E2%98%85" align="absmiddle" height="18">&nbsp;<img alt="MIT" src="https://img.shields.io/badge/MIT-lightgrey?style=flat-square" align="absmiddle" height="18">                                     | Buffer-style scheduling, DMs and analytics for an X account.<br><sub>D1 · R2 · Cron</sub>                                                                                         |
 
 ## Chat and realtime
 
@@ -331,7 +332,7 @@ are recognised. If a project deploys to Cloudflare some third way, that's a bug 
 The audit needs `gh` authenticated for API quota; CI runs it monthly and on every pull request.
 
 <!-- audit stamp, updated by build.js -->
-**Entries:** 116 · **Last audit:** 2026-09-15
+**Entries:** 117 · **Last audit:** 2026-09-15
 
 ## Contributing
 
