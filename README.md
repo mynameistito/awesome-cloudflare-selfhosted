@@ -4,13 +4,15 @@
 
 A Worker, a D1 database, an R2 bucket and a `wrangler deploy` now cover what used to need a VPS
 and a monthly invoice. This list tracks the software taking advantage of that: a booking page
-instead of Calendly, a feedback board instead of Canny, an inbox instead of Google Workspace —
-each one deployed to an account you control, on infrastructure you don't have to run.
+instead of Calendly, a feedback board instead of Canny, an inbox instead of Google Workspace.
 
-Every entry is machine-checked. The license is read from the repository's own license file, and
-the Cloudflare bindings on each line are parsed out of that project's own deploy configuration —
-`wrangler.toml`/`.jsonc`, or an [Alchemy](https://alchemy.run) `alchemy.run.ts` — rather than
-copied from its description. See the auditing section below.
+Every entry is checked rather than taken on trust: the licence is read from the project's own
+licence file and the bindings from its deploy configuration, not from its description. An orange
+licence badge means source-available, or no licence at all — worth reading the terms before you
+rely on it. [How the audit works.](docs/auditing.md)
+
+<!-- audit stamp, updated by build.js -->
+**Entries:** 117 · **Last audit:** 2026-09-15
 
 ## Contents
 
@@ -32,8 +34,6 @@ copied from its description. See the auditing section below.
 - [Remote access](#remote-access)
 - [Uptime and status pages](#uptime-and-status-pages)
 - [Personal](#personal)
-- [How this list is maintained](#how-this-list-is-maintained)
-- [Auditing](#auditing)
 - [Reuse](#reuse)
 
 <!-- END TOC -->
@@ -50,34 +50,6 @@ relays that just shim someone else's SaaS. Full criteria are in the contributing
 
 **Know one that's missing? [Suggest it in an issue.](../../issues/new?template=add-entry.yml)**
 Three fields, no pull request — the rest is read from the repository.
-
-### Reading the annotations
-
-Each row carries the project and its licence on the left, what it replaces and the Cloudflare
-bindings its deploy configuration declares underneath on the right:
-
-> **Counterscale**
-> ★ 2.1k · MIT — Google Analytics alternative built on Analytics Engine.
-> <sub>R2 · Analytics Engine · Cron</sub>
-
-The star badge is fetched from shields.io when you load the page, so it is always current and no
-count is stored in this repository. Everything else is read out of the project's own repository by
-the audit.
-
-Nothing is left out because of its license. A `⚠` marks the two cases worth reading before you
-rely on a project:
-
-An **orange** licence badge reading `⚠ unlicensed` means no license file at all. GitHub's default reserves all rights, so strictly
-nobody else may use, modify or deploy it. It is almost always an oversight, and adding a `LICENSE`
-is one commit.
-
-An orange badge naming a licence — `⚠ BUSL-1.1` and similar — means source-available rather
-than open source. Most of these permit
-self-hosting for your own use and only restrict competing commercially with the author, which is
-not what this list is for. Read the terms anyway: PolyForm Noncommercial bars commercial use
-outright.
-
----
 
 <!-- BEGIN ENTRIES -->
 
@@ -277,90 +249,23 @@ outright.
 
 ---
 
-## How this list is maintained
-
-`data/` is the source of truth and README.md is generated from it, so edit the data, not this page:
-
-```
-data/
-  categories/<slug>.md   one per section — name, order, description
-  entries/<slug>.md      one per project — references a category by its slug
-```
-
-A file's name is its id. `data/entries/punctual.md` is the entry `punctual`, and its
-`category: business-and-operations` points at `data/categories/business-and-operations.md`.
-Nothing else links the two, so a rename surfaces as a load error rather than an entry quietly
-disappearing from the list.
-
-```bash
-npm run build     # regenerate README.md from data/
-npm run audit     # re-check every entry against GitHub
-npm test          # test the deploy-config parser
-```
-
-No dependencies — Node 20+ and [`gh`](https://cli.github.com) are all you need.
-
-## Auditing
-
-[`scripts/audit.js`](scripts/audit.js) walks every entry and reports:
-
-- the resolved SPDX license, read from the repository's license file rather than trusting
-  GitHub's classifier, and whether it wants a marker
-- whether a Cloudflare deploy configuration exists — `wrangler.toml`, `.json`, `.jsonc`, a
-  committed `.example` variant, or an Alchemy `alchemy.run.ts`
-- the bindings that configuration declares, which is where the `·` list on each line comes from
-- last push date, latest release tag, and archived status
-
-```bash
-npm run audit           # check every entry
-npm run audit:stale     # only entries inactive for 12+ months
-npm run audit -- --json # machine-readable
-```
-
-Reading bindings out of a config is fiddlier than it sounds, and getting it wrong in either
-direction misleads people: a path glob like `/fonts/*` or `"/api/*"` looks exactly like the start
-of a block comment, while `wrangler init` scaffolds every binding Cloudflare offers as commented
-placeholders that a project never uses. Meanwhile a binding commented out because its id has to
-be filled in locally *is* real. [`scripts/config-parser.js`](scripts/config-parser.js) holds those
-rules and [`config-parser.test.js`](scripts/config-parser.test.js) pins down each case.
-
-Not every project uses wrangler. Alchemy declares the same infrastructure
-in TypeScript, and a checker that only looks for `wrangler.toml` rejects those projects as
-undeployable — which is how a list like this quietly loses some of its best entries. Both forms
-are recognised. If a project deploys to Cloudflare some third way, that's a bug worth reporting.
-
-The audit needs `gh` authenticated for API quota; CI runs it monthly and on every pull request.
-
-<!-- audit stamp, updated by build.js -->
-**Entries:** 117 · **Last audit:** 2026-09-15
-
 ## Contributing
 
-**To suggest an entry, use the issue form linked at the top of this page.** Don't send a pull
-request — entry files are generated, and `license` and `bindings` are read from the repository
-rather than written by hand.
+**To suggest an entry, use the issue form linked above.** Don't send a pull request — entry files
+are generated, and the licence and bindings are read from the repository rather than written by
+hand.
 
-The form asks for the three things only a person knows: **which repository, which category, and
-what it replaces.** Everything else is read from the repository.
+The form asks for the three things only a person knows: which repository, which category, and what
+it replaces. A bot checks the rest and comments on your issue. A maintainer then decides whether it
+belongs, since no machine can tell a SaaS replacement from a framework; on approval the entry is
+generated and a pull request opens that closes your issue. Nothing to do after submitting.
 
-1. A bot checks it immediately and comments on your issue — license, deploy configuration,
-   activity, whether it's already listed. If something fails it lists every reason at once, and
-   re-checks each time you edit the issue.
-2. A maintainer decides whether it belongs. Passing the checks isn't the same as qualifying: no
-   machine can tell a SaaS replacement from a framework, and the name, summary and category all
-   want a human read.
-3. When they approve, the entry is generated, this page is rebuilt, and a pull request opens that
-   closes your issue.
-
-So there's nothing to do after submitting, and nothing to rebase. Corrections to a description,
-the criteria, or the tooling are ordinary pull requests — see [CONTRIBUTING.md](CONTRIBUTING.md).
+Corrections to a description, the criteria, or the tooling are ordinary pull requests — see
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Reuse
 
-[MIT](LICENSE), for the repository as a whole — the tooling in `scripts/` and the content in
-`data/` alike. Reuse the audit and the config parser in your own list if they're useful.
-
-The [awesome guidelines](https://github.com/sindresorhus/awesome/blob/main/awesome.md) recommend
-CC0 for lists, and the list content here is offered in that spirit: **take the entries freely, no
-attribution needed.** MIT's notice requirement is meant for the code, not for a collection of
-links and facts, most of which isn't copyrightable in the first place.
+[MIT](LICENSE) for the repository as a whole. The
+[awesome guidelines](https://github.com/sindresorhus/awesome/blob/main/awesome.md) recommend CC0
+for lists, and the entries are offered in that spirit: **take them freely, no attribution needed.**
+MIT's notice requirement is meant for the tooling in `scripts/`, which is reusable in your own list.
