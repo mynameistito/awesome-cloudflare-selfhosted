@@ -11,9 +11,6 @@ licence file and the bindings from its deploy configuration, not from its descri
 licence badge means source-available, or no licence at all — worth reading the terms before you
 rely on it. [How the audit works.](docs/auditing.md)
 
-<!-- audit stamp, updated by build.js -->
-**Entries:** 117 · **Last audit:** 2026-09-15
-
 ## Contents
 
 <!-- BEGIN TOC -->

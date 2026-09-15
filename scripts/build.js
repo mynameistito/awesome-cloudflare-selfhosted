@@ -26,7 +26,6 @@ const START = "<!-- BEGIN ENTRIES -->";
 const END = "<!-- END ENTRIES -->";
 const TOC_START = "<!-- BEGIN TOC -->";
 const TOC_END = "<!-- END TOC -->";
-const COUNT_RE = /\*\*Entries:\*\* \d+ · \*\*Last audit:\*\* \d{4}-\d{2}-\d{2}/;
 
 function anchor(title) {
   return title.toLowerCase().replace(/[^a-z0-9 -]/g, "").replace(/ /g, "-");
@@ -174,18 +173,6 @@ function main() {
   updated = splice(updated, TOC_START, TOC_END, tableOfContents(updated));
 
   const unlicensed = entries.filter((e) => !e.license).length;
-  let stamp =
-    `**Entries:** ${entries.length} · ` +
-    `**Last audit:** ${new Date().toISOString().slice(0, 10)}`;
-
-  if (check) {
-    // Don't let a date bump alone count as drift.
-    const existing = current.match(COUNT_RE);
-    if (existing) {
-      stamp = existing[0].replace(/\*\*Entries:\*\* \d+/, `**Entries:** ${entries.length}`);
-    }
-  }
-  updated = updated.replace(COUNT_RE, stamp);
 
   writeOrCheck(README, updated, check, changed);
   writeOrCheck(ISSUE_FORM, issueForm(categories), check, changed);
