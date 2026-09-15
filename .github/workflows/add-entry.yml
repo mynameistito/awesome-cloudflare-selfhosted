@@ -16,6 +16,15 @@ on:
   issues:
     types: [opened, edited, labeled]
 
+# Creating an issue that already carries the label fires `opened` and `labeled`
+# a second apart, so the checks ran twice and commented twice. The issue form
+# applies the label at creation, so this would have hit every submission.
+# Keyed per issue, so two submissions still run in parallel; rapid successive
+# edits collapse to the latest one too.
+concurrency:
+  group: add-entry-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
 jobs:
   # Stage one: report on the submission. Read-only apart from the comment.
   check:
