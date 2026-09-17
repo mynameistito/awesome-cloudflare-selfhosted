@@ -82,6 +82,12 @@ function escapeRe(s) {
 
 function splice(text, start, end, body) {
   const re = new RegExp(`${escapeRe(start)}[\\s\\S]*?${escapeRe(end)}`);
+  // A hand-edit that loses a marker leaves the text untouched, so the build
+  // used to report "Wrote README.md (116 entries)" having written no entries at
+  // all -- and --check called the result current. Name the marker instead.
+  if (!re.test(text)) {
+    throw new Error(`README.md is missing the ${start} ... ${end} markers`);
+  }
   return text.replace(re, `${start}\n\n${body}\n\n${end}`);
 }
 

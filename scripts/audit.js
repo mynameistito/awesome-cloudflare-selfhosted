@@ -49,6 +49,35 @@ function saveCache() {
   fs.writeFileSync(CACHE_PATH, JSON.stringify(cache));
 }
 
+/**
+ * Diagnostics go to stderr, never stdout. `propose-entry.js` writes its verdict
+ * to stdout as JSON for the workflow to parse, so a line printed there is a
+ * broken run; stderr lands in the Actions log, which is where someone is
+ * looking when a monthly audit suddenly flags every entry at once.
+ *
+ * The message is a fixed template and the values are `key=value` fields, so a
+ * run whose lookups all failed is one greppable line repeated rather than a
+ * hundred differently-worded sentences.
+ */
+function warn(template, fields) {
+  const pairs = Object.entries(fields)
+    .map(
+      ([key, value]) =>
+        `${key}=${JSON.stringify(String(value).replace(/[\r\n]+/g, " ").slice(0, 200))}`,
+    )
+    .join(" ");
+  process.stderr.write(`${template} ${pairs}\n`);
+}
+
+/** The first line of whatever a failed call carried, so one failure is one line. */
+function reason(err) {
+  const status = err?.status ?? err?.code ?? null;
+  const detail = String(err?.stderr ?? err?.message ?? err ?? "")
+    .trim()
+    .split("\n")[0];
+  return `${status === null ? "" : `exit ${status}: `}${detail || "no details"}`;
+}
+
 function gh(apiPath) {
   if (apiPath in cache) return cache[apiPath];
   let value = null;
@@ -56,10 +85,17 @@ function gh(apiPath) {
     const out = execFileSync("gh", ["api", apiPath], {
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
-      stdio: ["ignore", "pipe", "ignore"],
+      // stderr is captured rather than discarded so the reason a lookup failed
+      // can be reported instead of thrown away.
+      stdio: ["ignore", "pipe", "pipe"],
     });
     value = JSON.parse(out);
-  } catch {
+  } catch (err) {
+    // A null here is indistinguishable from a repository GitHub really did not
+    // return, and both surface on the entry as "repository not found or
+    // renamed". Without this line an expired GH_TOKEN or a rate limit looks
+    // exactly like a hundred repositories disappearing at once.
+    warn("gh api lookup failed", { path: apiPath, reason: reason(err) });
     value = null;
   }
   cache[apiPath] = value;
@@ -75,9 +111,16 @@ async function raw(repo, branch, filePath) {
       `https://raw.githubusercontent.com/${repo}/${branch}/${filePath}`,
       { signal: AbortSignal.timeout(20_000) },
     );
-    if (res.ok) text = await res.text();
-  } catch {
-    text = "";
+    if (res.ok) {
+      text = await res.text();
+    } else {
+      // The empty body is what the license classifier reads, so a 500 or a
+      // timeout here would otherwise be reported as a project with no licence
+      // -- a claim about the repository rather than about the fetch.
+      warn("raw fetch failed", { repo, path: filePath, status: res.status });
+    }
+  } catch (err) {
+    warn("raw fetch failed", { repo, path: filePath, reason: reason(err) });
   }
   cache[key] = text.slice(0, 120_000);
   return cache[key];
